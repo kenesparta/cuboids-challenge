@@ -1,0 +1,26 @@
+package migrations
+
+import (
+	"fmt"
+
+	"github.com/go-gormigrate/gormigrate/v2"
+	"gorm.io/gorm"
+)
+
+func init() {
+	migrations = append(migrations, &gormigrate.Migration{
+		ID: "{{.ID}}",
+		Migrate: func(tx *gorm.DB) error {
+			fmt.Println("Running migration {{.NAME}}")
+			type Model struct {}
+
+			return tx.AutoMigrate(&Model{})
+		},
+		Rollback: func(tx *gorm.DB) error {
+			fmt.Println("Rollback migration {{.NAME}}")
+			type Model struct {}
+
+			return tx.Migrator().DropTable(&Model{})
+		},
+	})
+}

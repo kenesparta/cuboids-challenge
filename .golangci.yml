@@ -1,0 +1,35 @@
+output:
+  sort-results: true
+
+linters-settings:
+  errcheck:
+    check-type-assertions: true
+
+issues:
+  exclude-rules:
+    - path: migrations/...
+      linters:
+        - gochecknoinits
+        - forbidigo
+        - wrapcheck
+    - path: cmd/migrate
+      linters:
+        - forbidigo
+    - source: "CONN|ENV|migrations"
+      linters:
+        - gochecknoglobals
+    - text: TODO
+      linters:
+        - godox
+  
+linters:
+  enable-all: true
+  disable:
+    - exhaustivestruct
+    - gci
+    - paralleltest
+
+    # deprecated
+    - interfacer
+    - scopelint
+    - maligned

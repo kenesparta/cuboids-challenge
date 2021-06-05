@@ -1,0 +1,11 @@
+# OS
+.DS_Store
+
+# DB
+db/*
+!db/.gitkeep
+
+# IDE
+.vscode/*
+!.vscode/launch.json
+reports
