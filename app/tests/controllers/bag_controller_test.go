@@ -20,22 +20,22 @@ var _ = Describe("Bag Controller", func() {
 		testutils.ClearDB()
 	})
 
-	var w *httptest.ResponseRecorder
+	var recorder *httptest.ResponseRecorder
 
 	Describe("List", func() {
 		BeforeEach(func() {
 			for i := 0; i < 3; i++ {
 				testutils.AddRecords(factories.Bag())
 			}
-			w = testutils.MockRequest(http.MethodGet, "/bags", nil)
+			recorder = testutils.MockRequest(http.MethodGet, "/bags", nil)
 		})
 
 		It("Response HTTP status code 200", func() {
-			Expect(w.Code).To(Equal(200))
+			Expect(recorder.Code).To(Equal(200))
 		})
 
 		It("Fetch all bags", func() {
-			l, _ := testutils.DeserializeList(w.Body.String())
+			l, _ := testutils.DeserializeList(recorder.Body.String())
 			Expect(len(l)).To(Equal(3))
 			for _, m := range l {
 				Expect(m["title"]).ToNot(BeNil())
@@ -54,7 +54,7 @@ var _ = Describe("Bag Controller", func() {
 		})
 
 		JustBeforeEach(func() {
-			w = testutils.MockRequest(http.MethodGet, "/bags/"+fmt.Sprintf("%v", bagID), nil)
+			recorder = testutils.MockRequest(http.MethodGet, "/bags/"+fmt.Sprintf("%v", bagID), nil)
 		})
 
 		Context("When the bag is present", func() {
@@ -63,11 +63,11 @@ var _ = Describe("Bag Controller", func() {
 			})
 
 			It("Response HTTP status code 200", func() {
-				Expect(w.Code).To(Equal(200))
+				Expect(recorder.Code).To(Equal(200))
 			})
 
 			It("Get the bag", func() {
-				m, _ := testutils.Deserialize(w.Body.String())
+				m, _ := testutils.Deserialize(recorder.Body.String())
 				Expect(m["id"]).To(BeEquivalentTo(bag.ID))
 				Expect(m["title"]).ToNot(BeNil())
 				Expect(m["volume"]).ToNot(BeNil())
@@ -81,7 +81,7 @@ var _ = Describe("Bag Controller", func() {
 			})
 
 			It("Response HTTP status code 404", func() {
-				Expect(w.Code).To(Equal(404))
+				Expect(recorder.Code).To(Equal(404))
 			})
 		})
 	})
@@ -91,7 +91,7 @@ var _ = Describe("Bag Controller", func() {
 
 		JustBeforeEach(func() {
 			body, _ := testutils.SerializeToString(bagPayload)
-			w = testutils.MockRequest(http.MethodPost, "/bags", &body)
+			recorder = testutils.MockRequest(http.MethodPost, "/bags", &body)
 		})
 
 		Context("When the payload is valid", func() {
@@ -101,11 +101,11 @@ var _ = Describe("Bag Controller", func() {
 			})
 
 			It("Response HTTP status code 201", func() {
-				Expect(w.Code).To(Equal(201))
+				Expect(recorder.Code).To(Equal(201))
 			})
 
 			It("Create the bag", func() {
-				m, _ := testutils.Deserialize(w.Body.String())
+				m, _ := testutils.Deserialize(recorder.Body.String())
 				Expect(m["id"]).ToNot(BeNil())
 				Expect(m["title"]).ToNot(BeNil())
 				Expect(m["volume"]).ToNot(BeNil())
@@ -120,7 +120,7 @@ var _ = Describe("Bag Controller", func() {
 			})
 
 			It("Response HTTP status code 400", func() {
-				Expect(w.Code).To(Equal(400))
+				Expect(recorder.Code).To(Equal(400))
 			})
 		})
 	})
