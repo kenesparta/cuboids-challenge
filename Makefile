@@ -54,6 +54,7 @@ test-html:
 
 # Generate the HTML report, needs: Needs pip install junit2html
 lint-html:
+	mkdir -p reports
 	rm -rf reports/lint.html
 	golangci-lint run --out-format junit-xml ./... > reports/lint.xml ;\
 	junit2html reports/lint.xml reports/lint.html
