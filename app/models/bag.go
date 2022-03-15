@@ -20,6 +20,7 @@ func (b *Bag) PayloadVolume() uint {
 	for _, cuboid := range b.Cuboids {
 		totalVolume += cuboid.PayloadVolume()
 	}
+
 	return totalVolume
 }
 

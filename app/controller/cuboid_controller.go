@@ -26,6 +26,7 @@ func GetCuboid(ctx *gin.Context) {
 		cuboidID = ctx.Param("cuboidID")
 		cuboid   models.Cuboid
 	)
+
 	if r := db.CONN.First(&cuboid, cuboidID); r.Error != nil {
 		if errors.Is(r.Error, gorm.ErrRecordNotFound) {
 			ctx.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": "Not Found"})
@@ -35,6 +36,7 @@ func GetCuboid(ctx *gin.Context) {
 
 		return
 	}
+
 	ctx.JSON(http.StatusOK, &cuboid)
 }
 
@@ -65,16 +67,19 @@ func CreateCuboid(ctx *gin.Context) {
 		} else {
 			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": r.Error.Error()})
 		}
+
 		return
 	}
 
 	if !bag.HasCapacity(cuboid.PayloadVolume()) {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Insufficient capacity in bag"})
+
 		return
 	}
 
 	if bag.Disabled {
 		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Bag is disabled"})
+
 		return
 	}
 
@@ -83,6 +88,7 @@ func CreateCuboid(ctx *gin.Context) {
 		status   int
 		method   = ctx.Request.Method
 	)
+
 	switch method {
 	case http.MethodPost:
 		queryRes = db.CONN.Create(&cuboid)
@@ -90,13 +96,17 @@ func CreateCuboid(ctx *gin.Context) {
 	case http.MethodPut:
 		cuboid.ID = cuboidInput.ID
 		queryRes = db.CONN.Updates(&cuboid)
+
 		if queryRes.RowsAffected == 0 {
 			ctx.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": "Not Found"})
+
 			return
 		}
+
 		status = http.StatusOK
 	default:
 		ctx.AbortWithStatusJSON(http.StatusMethodNotAllowed, gin.H{"error": "Not Allowed"})
+
 		return
 	}
 
@@ -119,6 +129,7 @@ func DeleteCuboid(ctx *gin.Context) {
 		cuboidID = ctx.Param("cuboidID")
 		cuboid   models.Cuboid
 	)
+
 	if r := db.CONN.First(&cuboid, cuboidID); r.Error != nil {
 		if errors.Is(r.Error, gorm.ErrRecordNotFound) {
 			ctx.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": "Not Found"})
