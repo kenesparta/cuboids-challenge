@@ -56,6 +56,27 @@ func CreateCuboid(c *gin.Context) {
 		Depth:  cuboidInput.Depth,
 		BagID:  cuboidInput.BagID,
 	}
+
+	var bag models.Bag
+	if r := db.CONN.Preload("Cuboids").First(&bag, cuboid.BagID); r.Error != nil {
+		if errors.Is(r.Error, gorm.ErrRecordNotFound) {
+			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": "Not Found"})
+		} else {
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": r.Error.Error()})
+		}
+		return
+	}
+
+	if !bag.HasCapacity(cuboid.PayloadVolume()) {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Insufficient capacity in bag"})
+		return
+	}
+
+	if bag.Disabled {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Bag is disabled"})
+		return
+	}
+
 	if r := db.CONN.Create(&cuboid); r.Error != nil {
 		var err models.ValidationErrors
 		if ok := errors.As(r.Error, &err); ok {

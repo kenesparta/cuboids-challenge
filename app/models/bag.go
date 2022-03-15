@@ -8,8 +8,9 @@ import (
 type Bag struct {
 	Model
 
-	Title  string `validate:"required,max=255"`
-	Volume uint   `validate:"gt=0"`
+	Title    string `validate:"required,max=255"`
+	Volume   uint   `validate:"gt=0"`
+	Disabled bool
 
 	Cuboids []Cuboid
 }
@@ -27,6 +28,11 @@ func (b *Bag) AvailableVolume() uint {
 }
 
 func (b *Bag) SetDisabled(value bool) {
+	b.Disabled = value
+}
+
+func (b *Bag) HasCapacity(newCuboidVolume uint) bool {
+	return b.AvailableVolume() >= newCuboidVolume
 }
 
 func (b *Bag) MarshalJSON() ([]byte, error) {
