@@ -40,6 +40,7 @@ func GetCuboid(c *gin.Context) {
 
 func CreateCuboid(c *gin.Context) {
 	var cuboidInput struct {
+		ID     uint `json:"id"`
 		Width  uint
 		Height uint
 		Depth  uint
@@ -77,18 +78,40 @@ func CreateCuboid(c *gin.Context) {
 		return
 	}
 
-	if r := db.CONN.Create(&cuboid); r.Error != nil {
+	var (
+		queryRes *gorm.DB
+		status   int
+		method   = c.Request.Method
+	)
+	switch method {
+	case http.MethodPost:
+		queryRes = db.CONN.Create(&cuboid)
+		status = http.StatusCreated
+	case http.MethodPut:
+		cuboid.ID = cuboidInput.ID
+		queryRes = db.CONN.Updates(&cuboid)
+		if queryRes.RowsAffected == 0 {
+			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": "Not Found"})
+			return
+		}
+		status = http.StatusOK
+	default:
+		c.AbortWithStatusJSON(http.StatusMethodNotAllowed, gin.H{"error": "Not Allowed"})
+		return
+	}
+
+	if queryRes.Error != nil {
 		var err models.ValidationErrors
-		if ok := errors.As(r.Error, &err); ok {
+		if ok := errors.As(queryRes.Error, &err); ok {
 			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		} else {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": r.Error.Error()})
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": queryRes.Error.Error()})
 		}
 
 		return
 	}
 
-	c.JSON(http.StatusCreated, &cuboid)
+	c.JSON(status, &cuboid)
 }
 
 func DeleteCuboid(c *gin.Context) {

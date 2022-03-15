@@ -156,18 +156,68 @@ var _ = Describe("Cuboid Controller", func() {
 	// IMPLEMENT the tests BELOW
 
 	Describe("Update", func() {
-		PIt("Response HTTP status code 200")
+		bag = &Bag{
+			Title:  "A bag",
+			Volume: 5,
+			Cuboids: []Cuboid{
+				{Width: 1, Height: 1, Depth: 1},
+				{Width: 1, Height: 1, Depth: 2},
+			},
+		}
+		testutils.AddRecords(bag)
 
-		PIt("Returns the updated cuboid")
+		cuboidPayload := map[string]interface{}{}
+
+		BeforeEach(func() {
+			cuboidPayload = map[string]interface{}{
+				"id":     bag.Cuboids[0].ID,
+				"width":  1,
+				"height": 1,
+				"depth":  1,
+				"bagId":  bag.ID,
+			}
+		})
+
+		JustBeforeEach(func() {
+			body, _ := testutils.SerializeToString(cuboidPayload)
+			w = testutils.MockRequest(http.MethodPut, "/cuboids", &body)
+		})
+
+		It("Response HTTP status code 200", func() {
+			Expect(w.Code).To(Equal(200))
+		})
+
+		It("Returns the updated cuboid", func() {
+			m, _ := testutils.Deserialize(w.Body.String())
+			Expect(m["width"]).ToNot(BeNil())
+			Expect(m["height"]).ToNot(BeNil())
+			Expect(m["depth"]).ToNot(BeNil())
+			Expect(m["volume"]).ToNot(BeNil())
+			Expect(m["bagId"]).To(BeEquivalentTo(bag.ID))
+		})
 
 		Context("When cuboid does not fit into the bag", func() {
-			PIt("Response HTTP status code 400")
+			BeforeEach(func() {
+				cuboidPayload["width"] = 3
+			})
 
-			PIt("Response a JSON with error message 'Insufficient capacity in bag'")
+			It("Response HTTP status code 400", func() {
+				Expect(w.Code).To(Equal(400))
+			})
+
+			It("Response a JSON with error message 'Insufficient capacity in bag'", func() {
+				m, _ := testutils.Deserialize(w.Body.String())
+				Expect(m["error"]).To(Equal("Insufficient capacity in bag"))
+			})
 		})
 
 		Context("When cuboid is not present", func() {
-			PIt("Response HTTP status code 404")
+			BeforeEach(func() {
+				cuboidPayload["id"] = 9999
+			})
+			It("Response HTTP status code 404", func() {
+				Expect(w.Code).To(Equal(404))
+			})
 		})
 	})
 
