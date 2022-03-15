@@ -188,12 +188,12 @@ var _ = Describe("Cuboid Controller", func() {
 		})
 
 		It("Returns the updated cuboid", func() {
-			m, _ := testutils.Deserialize(w.Body.String())
-			Expect(m["width"]).ToNot(BeNil())
-			Expect(m["height"]).ToNot(BeNil())
-			Expect(m["depth"]).ToNot(BeNil())
-			Expect(m["volume"]).ToNot(BeNil())
-			Expect(m["bagId"]).To(BeEquivalentTo(bag.ID))
+			dataMap, _ := testutils.Deserialize(w.Body.String())
+			Expect(dataMap["width"]).ToNot(BeNil())
+			Expect(dataMap["height"]).ToNot(BeNil())
+			Expect(dataMap["depth"]).ToNot(BeNil())
+			Expect(dataMap["volume"]).ToNot(BeNil())
+			Expect(dataMap["bagId"]).To(BeEquivalentTo(bag.ID))
 		})
 
 		Context("When cuboid does not fit into the bag", func() {
@@ -206,8 +206,8 @@ var _ = Describe("Cuboid Controller", func() {
 			})
 
 			It("Response a JSON with error message 'Insufficient capacity in bag'", func() {
-				m, _ := testutils.Deserialize(w.Body.String())
-				Expect(m["error"]).To(Equal("Insufficient capacity in bag"))
+				dataMap, _ := testutils.Deserialize(w.Body.String())
+				Expect(dataMap["error"]).To(Equal("Insufficient capacity in bag"))
 			})
 		})
 
@@ -238,8 +238,8 @@ var _ = Describe("Cuboid Controller", func() {
 			})
 
 			It("Remove the cuboid", func() {
-				m, _ := testutils.Deserialize(w.Body.String())
-				Expect(m["id"]).To(BeEquivalentTo(bag.Cuboids[0].ID))
+				dataMap, _ := testutils.Deserialize(w.Body.String())
+				Expect(dataMap["id"]).To(BeEquivalentTo(bag.Cuboids[0].ID))
 			})
 		})
 

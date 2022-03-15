@@ -10,35 +10,35 @@ import (
 	"gorm.io/gorm"
 )
 
-func ListCuboids(c *gin.Context) {
+func ListCuboids(ctx *gin.Context) {
 	var cuboids []models.Cuboid
 	if r := db.CONN.Find(&cuboids); r.Error != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": r.Error.Error()})
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": r.Error.Error()})
 
 		return
 	}
 
-	c.JSON(http.StatusOK, cuboids)
+	ctx.JSON(http.StatusOK, cuboids)
 }
 
-func GetCuboid(c *gin.Context) {
+func GetCuboid(ctx *gin.Context) {
 	var (
-		cuboidID = c.Param("cuboidID")
+		cuboidID = ctx.Param("cuboidID")
 		cuboid   models.Cuboid
 	)
 	if r := db.CONN.First(&cuboid, cuboidID); r.Error != nil {
 		if errors.Is(r.Error, gorm.ErrRecordNotFound) {
-			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": "Not Found"})
+			ctx.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": "Not Found"})
 		} else {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": r.Error.Error()})
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": r.Error.Error()})
 		}
 
 		return
 	}
-	c.JSON(http.StatusOK, &cuboid)
+	ctx.JSON(http.StatusOK, &cuboid)
 }
 
-func CreateCuboid(c *gin.Context) {
+func CreateCuboid(ctx *gin.Context) {
 	var cuboidInput struct {
 		ID     uint `json:"id"`
 		Width  uint
@@ -47,7 +47,7 @@ func CreateCuboid(c *gin.Context) {
 		BagID  uint `json:"bagId"`
 	}
 
-	if err := c.BindJSON(&cuboidInput); err != nil {
+	if err := ctx.BindJSON(&cuboidInput); err != nil {
 		return
 	}
 
@@ -61,27 +61,27 @@ func CreateCuboid(c *gin.Context) {
 	var bag models.Bag
 	if r := db.CONN.Preload("Cuboids").First(&bag, cuboid.BagID); r.Error != nil {
 		if errors.Is(r.Error, gorm.ErrRecordNotFound) {
-			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": "Not Found"})
+			ctx.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": "Not Found"})
 		} else {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": r.Error.Error()})
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": r.Error.Error()})
 		}
 		return
 	}
 
 	if !bag.HasCapacity(cuboid.PayloadVolume()) {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Insufficient capacity in bag"})
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Insufficient capacity in bag"})
 		return
 	}
 
 	if bag.Disabled {
-		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Bag is disabled"})
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Bag is disabled"})
 		return
 	}
 
 	var (
 		queryRes *gorm.DB
 		status   int
-		method   = c.Request.Method
+		method   = ctx.Request.Method
 	)
 	switch method {
 	case http.MethodPost:
@@ -91,49 +91,49 @@ func CreateCuboid(c *gin.Context) {
 		cuboid.ID = cuboidInput.ID
 		queryRes = db.CONN.Updates(&cuboid)
 		if queryRes.RowsAffected == 0 {
-			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": "Not Found"})
+			ctx.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": "Not Found"})
 			return
 		}
 		status = http.StatusOK
 	default:
-		c.AbortWithStatusJSON(http.StatusMethodNotAllowed, gin.H{"error": "Not Allowed"})
+		ctx.AbortWithStatusJSON(http.StatusMethodNotAllowed, gin.H{"error": "Not Allowed"})
 		return
 	}
 
 	if queryRes.Error != nil {
 		var err models.ValidationErrors
 		if ok := errors.As(queryRes.Error, &err); ok {
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		} else {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": queryRes.Error.Error()})
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": queryRes.Error.Error()})
 		}
 
 		return
 	}
 
-	c.JSON(status, &cuboid)
+	ctx.JSON(status, &cuboid)
 }
 
-func DeleteCuboid(c *gin.Context) {
+func DeleteCuboid(ctx *gin.Context) {
 	var (
-		cuboidID = c.Param("cuboidID")
+		cuboidID = ctx.Param("cuboidID")
 		cuboid   models.Cuboid
 	)
 	if r := db.CONN.First(&cuboid, cuboidID); r.Error != nil {
 		if errors.Is(r.Error, gorm.ErrRecordNotFound) {
-			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": "Not Found"})
+			ctx.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": "Not Found"})
 		} else {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": r.Error.Error()})
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": r.Error.Error()})
 		}
 
 		return
 	}
 
 	if r := db.CONN.Delete(&cuboid); r.Error != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": r.Error.Error()})
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": r.Error.Error()})
 
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"id": cuboid.ID})
+	ctx.JSON(http.StatusOK, gin.H{"id": cuboid.ID})
 }

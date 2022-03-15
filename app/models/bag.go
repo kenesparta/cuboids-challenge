@@ -36,7 +36,7 @@ func (b *Bag) HasCapacity(newCuboidVolume uint) bool {
 }
 
 func (b *Bag) MarshalJSON() ([]byte, error) {
-	j, err := json.Marshal(struct {
+	jsonBag, err := json.Marshal(struct {
 		ID              uint     `json:"id"`
 		Title           string   `json:"title"`
 		Volume          uint     `json:"volume"`
@@ -44,11 +44,16 @@ func (b *Bag) MarshalJSON() ([]byte, error) {
 		AvailableVolume uint     `json:"availableVolume"`
 		Cuboids         []Cuboid `json:"cuboids"`
 	}{
-		b.ID, b.Title, b.Volume, b.PayloadVolume(), b.AvailableVolume(), b.Cuboids,
+		b.ID,
+		b.Title,
+		b.Volume,
+		b.PayloadVolume(),
+		b.AvailableVolume(),
+		b.Cuboids,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal Bag. %w", err)
 	}
 
-	return j, nil
+	return jsonBag, nil
 }
