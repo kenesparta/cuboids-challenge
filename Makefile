@@ -27,7 +27,7 @@ db-prepare: db-migrate db-migrate-test
 # install requirements
 install:
 	go get ./...
-	go get -u -v github.com/spf13/cobra/cobra
+	go get -u -v github.com/spf13/cobra
 
 # prepare the app
 prepare: install db-prepare
