@@ -11,7 +11,7 @@ import (
 func init() {
 	migrations = append(migrations, &gormigrate.Migration{
 		ID: "20210601021337",
-		Migrate: func(tx *gorm.DB) error {
+		Migrate: func(trx *gorm.DB) error {
 			fmt.Println("Running migration create_bag")
 			type Bag struct {
 				models.Model
@@ -19,13 +19,13 @@ func init() {
 				Volume uint
 			}
 
-			return tx.AutoMigrate(&Bag{})
+			return trx.AutoMigrate(&Bag{})
 		},
-		Rollback: func(tx *gorm.DB) error {
+		Rollback: func(trx *gorm.DB) error {
 			fmt.Println("Rollback migration create_bag")
 			type Bag struct{}
 
-			return tx.Migrator().DropTable(&Bag{})
+			return trx.Migrator().DropTable(&Bag{})
 		},
 	})
 }

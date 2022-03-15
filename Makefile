@@ -27,7 +27,7 @@ db-prepare: db-migrate db-migrate-test
 # install requirements
 install:
 	go get ./...
-	go get -u -v github.com/spf13/cobra/cobra
+	go get -u -v github.com/spf13/cobra
 
 # prepare the app
 prepare: install db-prepare
@@ -43,3 +43,18 @@ lint:
 # start the app
 start:
 	go run app/main.go
+
+# Generate the HTML report, needs: Needs pip install junit2html
+test-html:
+	go test ./app/tests/... -v ;\
+	rm -rf reports/controllers.html ;\
+	rm -rf reports/model.html ;\
+	junit2html reports/controllers.xml reports/controllers.html ;\
+	junit2html reports/model.xml reports/model.html
+
+# Generate the HTML report, needs: Needs pip install junit2html
+lint-html:
+	mkdir -p reports
+	rm -rf reports/lint.html
+	golangci-lint run --out-format junit-xml ./... > reports/lint.xml ;\
+	junit2html reports/lint.xml reports/lint.html

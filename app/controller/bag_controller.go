@@ -10,41 +10,41 @@ import (
 	"gorm.io/gorm"
 )
 
-func ListBags(c *gin.Context) {
+func ListBags(ctx *gin.Context) {
 	var bags []models.Bag
 	if r := db.CONN.Preload("Cuboids").Find(&bags); r.Error != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": r.Error.Error()})
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": r.Error.Error()})
 
 		return
 	}
 
-	c.JSON(http.StatusOK, bags)
+	ctx.JSON(http.StatusOK, bags)
 }
 
-func GetBag(c *gin.Context) {
-	bagID := c.Param("bagID")
+func GetBag(ctx *gin.Context) {
+	bagID := ctx.Param("bagID")
 
 	var bag models.Bag
 	if r := db.CONN.Preload("Cuboids").First(&bag, bagID); r.Error != nil {
 		if errors.Is(r.Error, gorm.ErrRecordNotFound) {
-			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": "Not Found"})
+			ctx.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": "Not Found"})
 		} else {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": r.Error.Error()})
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": r.Error.Error()})
 		}
 
 		return
 	}
 
-	c.JSON(http.StatusOK, &bag)
+	ctx.JSON(http.StatusOK, &bag)
 }
 
-func CreateBag(c *gin.Context) {
+func CreateBag(ctx *gin.Context) {
 	var bagInput struct {
 		Title  string
 		Volume uint
 	}
 
-	if err := c.BindJSON(&bagInput); err != nil {
+	if err := ctx.BindJSON(&bagInput); err != nil {
 		return
 	}
 
@@ -56,36 +56,36 @@ func CreateBag(c *gin.Context) {
 	if r := db.CONN.Create(&bag); r.Error != nil {
 		var err models.ValidationErrors
 		if ok := errors.As(r.Error, &err); ok {
-			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		} else {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": r.Error.Error()})
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": r.Error.Error()})
 		}
 
 		return
 	}
 
-	c.JSON(http.StatusCreated, &bag)
+	ctx.JSON(http.StatusCreated, &bag)
 }
 
-func DeleteBag(c *gin.Context) {
-	bagID := c.Param("bagID")
+func DeleteBag(ctx *gin.Context) {
+	bagID := ctx.Param("bagID")
 
 	var bag models.Bag
 	if r := db.CONN.First(&bag, bagID); r.Error != nil {
 		if errors.Is(r.Error, gorm.ErrRecordNotFound) {
-			c.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": "Not Found"})
+			ctx.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": "Not Found"})
 		} else {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": r.Error.Error()})
+			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": r.Error.Error()})
 		}
 
 		return
 	}
 
 	if r := db.CONN.Delete(&bag); r.Error != nil {
-		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": r.Error.Error()})
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": r.Error.Error()})
 
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"status": "OK"})
+	ctx.JSON(http.StatusOK, gin.H{"status": "OK"})
 }

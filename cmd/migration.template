@@ -10,17 +10,17 @@ import (
 func init() {
 	migrations = append(migrations, &gormigrate.Migration{
 		ID: "{{.ID}}",
-		Migrate: func(tx *gorm.DB) error {
+		Migrate: func(trx *gorm.DB) error {
 			fmt.Println("Running migration {{.NAME}}")
 			type Model struct {}
 
-			return tx.AutoMigrate(&Model{})
+			return trx.AutoMigrate(&Model{})
 		},
-		Rollback: func(tx *gorm.DB) error {
+		Rollback: func(trx *gorm.DB) error {
 			fmt.Println("Rollback migration {{.NAME}}")
 			type Model struct {}
 
-			return tx.Migrator().DropTable(&Model{})
+			return trx.Migrator().DropTable(&Model{})
 		},
 	})
 }

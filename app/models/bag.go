@@ -8,25 +8,36 @@ import (
 type Bag struct {
 	Model
 
-	Title  string `validate:"required,max=255"`
-	Volume uint   `validate:"gt=0"`
+	Title    string `validate:"required,max=255"`
+	Volume   uint   `validate:"gt=0"`
+	Disabled bool
 
 	Cuboids []Cuboid
 }
 
 func (b *Bag) PayloadVolume() uint {
-	return 0
+	var totalVolume uint
+	for _, cuboid := range b.Cuboids {
+		totalVolume += cuboid.PayloadVolume()
+	}
+
+	return totalVolume
 }
 
 func (b *Bag) AvailableVolume() uint {
-	return 0
+	return b.Volume - b.PayloadVolume()
 }
 
 func (b *Bag) SetDisabled(value bool) {
+	b.Disabled = value
+}
+
+func (b *Bag) HasCapacity(newCuboidVolume uint) bool {
+	return b.AvailableVolume() >= newCuboidVolume
 }
 
 func (b *Bag) MarshalJSON() ([]byte, error) {
-	j, err := json.Marshal(struct {
+	jsonBag, err := json.Marshal(struct {
 		ID              uint     `json:"id"`
 		Title           string   `json:"title"`
 		Volume          uint     `json:"volume"`
@@ -34,11 +45,16 @@ func (b *Bag) MarshalJSON() ([]byte, error) {
 		AvailableVolume uint     `json:"availableVolume"`
 		Cuboids         []Cuboid `json:"cuboids"`
 	}{
-		b.ID, b.Title, b.Volume, b.PayloadVolume(), b.AvailableVolume(), b.Cuboids,
+		b.ID,
+		b.Title,
+		b.Volume,
+		b.PayloadVolume(),
+		b.AvailableVolume(),
+		b.Cuboids,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal Bag. %w", err)
 	}
 
-	return j, nil
+	return jsonBag, nil
 }
