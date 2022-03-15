@@ -3,6 +3,7 @@ package controller
 import (
 	"cuboid-challenge/app/db"
 	"cuboid-challenge/app/models"
+	"cuboid-challenge/app/service"
 	"errors"
 	"net/http"
 
@@ -41,87 +42,46 @@ func GetCuboid(ctx *gin.Context) {
 }
 
 func CreateCuboid(ctx *gin.Context) {
-	var cuboidInput struct {
-		ID     uint `json:"id"`
-		Width  uint
-		Height uint
-		Depth  uint
-		BagID  uint `json:"bagId"`
-	}
+	var cuboidInput service.CuboidInput
 
 	if err := ctx.BindJSON(&cuboidInput); err != nil {
 		return
 	}
 
-	cuboid := models.Cuboid{
-		Width:  cuboidInput.Width,
-		Height: cuboidInput.Height,
-		Depth:  cuboidInput.Depth,
-		BagID:  cuboidInput.BagID,
-	}
-
-	var bag models.Bag
-	if r := db.CONN.Preload("Cuboids").First(&bag, cuboid.BagID); r.Error != nil {
-		if errors.Is(r.Error, gorm.ErrRecordNotFound) {
-			ctx.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": "Not Found"})
-		} else {
-			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": r.Error.Error()})
-		}
-
-		return
-	}
-
-	if !bag.HasCapacity(cuboid.PayloadVolume()) {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Insufficient capacity in bag"})
-
-		return
-	}
-
-	if bag.Disabled {
-		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Bag is disabled"})
-
-		return
-	}
-
 	var (
-		queryRes *gorm.DB
-		status   int
-		method   = ctx.Request.Method
+		cuboidService = service.NewCuboidService(db.CONN, &cuboidInput)
+		method        = ctx.Request.Method
+		cuboidRes     *models.Cuboid
+		err           error
+		status        int
 	)
 
-	switch method {
-	case http.MethodPost:
-		queryRes = db.CONN.Create(&cuboid)
+	if http.MethodPost == method {
+		cuboidRes, err = cuboidService.Create()
 		status = http.StatusCreated
-	case http.MethodPut:
-		cuboid.ID = cuboidInput.ID
-		queryRes = db.CONN.Updates(&cuboid)
+	}
 
-		if queryRes.RowsAffected == 0 {
-			ctx.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": "Not Found"})
-
-			return
-		}
-
+	if http.MethodPut == method {
+		cuboidRes, err = cuboidService.Update()
 		status = http.StatusOK
+	}
+
+	if err == nil {
+		ctx.JSON(status, &cuboidRes)
+
+		return
+	}
+
+	switch {
+	case errors.Is(err, gorm.ErrRecordNotFound) || errors.Is(err, service.ErrNotFound):
+		ctx.AbortWithStatusJSON(http.StatusNotFound, gin.H{"error": "Not Found"})
+	case errors.Is(err, service.ErrBagDisabled):
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Bag is disabled"})
+	case errors.Is(err, service.ErrInsufficientCapacity):
+		ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "Insufficient capacity in bag"})
 	default:
-		ctx.AbortWithStatusJSON(http.StatusMethodNotAllowed, gin.H{"error": "Not Allowed"})
-
-		return
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 	}
-
-	if queryRes.Error != nil {
-		var err models.ValidationErrors
-		if ok := errors.As(queryRes.Error, &err); ok {
-			ctx.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		} else {
-			ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": queryRes.Error.Error()})
-		}
-
-		return
-	}
-
-	ctx.JSON(status, &cuboid)
 }
 
 func DeleteCuboid(ctx *gin.Context) {
