@@ -172,14 +172,35 @@ var _ = Describe("Cuboid Controller", func() {
 	})
 
 	Describe("Delete", func() {
-		Context("When the cuboid is present", func() {
-			PIt("Response HTTP status code 200")
+		var cuboidID uint
 
-			PIt("Remove the cuboid")
+		JustBeforeEach(func() {
+			w = testutils.MockRequest(http.MethodDelete, "/cuboids/"+fmt.Sprintf("%v", cuboidID), nil)
+		})
+
+		Context("When the cuboid is present", func() {
+			BeforeEach(func() {
+				cuboidID = bag.Cuboids[0].ID
+			})
+
+			It("Response HTTP status code 200", func() {
+				Expect(w.Code).To(Equal(200))
+			})
+
+			It("Remove the cuboid", func() {
+				m, _ := testutils.Deserialize(w.Body.String())
+				Expect(m["id"]).To(BeEquivalentTo(bag.Cuboids[0].ID))
+			})
 		})
 
 		Context("When cuboid is not present", func() {
-			PIt("Response HTTP status code 404")
+			BeforeEach(func() {
+				cuboidID = 9999
+			})
+
+			It("Response HTTP status code 404", func() {
+				Expect(w.Code).To(Equal(404))
+			})
 		})
 	})
 })
