@@ -10,17 +10,17 @@ import (
 func init() {
 	migrations = append(migrations, &gormigrate.Migration{
 		ID: "20220314230604",
-		Migrate: func(tx *gorm.DB) error {
+		Migrate: func(trx *gorm.DB) error {
 			fmt.Println("Running migration new_bag_disabled_field")
 			type Bag struct{ Disabled bool }
 
-			return tx.Migrator().AddColumn(&Bag{}, "disabled")
+			return trx.Migrator().AddColumn(&Bag{}, "disabled")
 		},
-		Rollback: func(tx *gorm.DB) error {
+		Rollback: func(trx *gorm.DB) error {
 			fmt.Println("Rollback migration new_bag_disabled_field")
 			type Bag struct{ Disabled bool }
 
-			return tx.Migrator().DropColumn(&Bag{}, "disabled")
+			return trx.Migrator().DropColumn(&Bag{}, "disabled")
 		},
 	})
 }
